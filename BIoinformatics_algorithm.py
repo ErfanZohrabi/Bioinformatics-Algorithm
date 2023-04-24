@@ -54,7 +54,7 @@ def gc_content(dna_seq):
 # print(gc_content("atagagagatctcgatagagagatctcgatagagagatctcg"))
 
 
-# computing the GC content of the non-overlapping sub-sequences of size k of the inputted sequence (Returns GC content of non−overlapping sub−sequences of size k The result is a list)
+# computing the GC content of the non-overlapping sub-sequences of size k of the inputted sequence (Returns GC content of non-overlapping sub-sequences of size k The result is a list)
 def gc_content_subseq(dna_seq, k=100):
     res =[]
     for i in range(0, len(dna_seq)-k+1, k):
@@ -234,7 +234,7 @@ else :
     print ("DNA sequence is not valid")
 
 
-#Reads a sequence from a multi−line text file
+#Reads a sequence from a multi-line text file
 def read_seq_from_file(filename):
     fh = open(filename, "r")
     lines = fh.readlines()
@@ -256,7 +256,7 @@ if validate_dna (seq):
     orfs = all_orfs_ord(seq)
     i=1
     for orf in orfs:
-        write_seq_to_file(orf, "orf−"+ str (i)+".txt")
+        write_seq_to_file(orf, "orf-"+ str (i)+".txt")
         i += 1
 else : 
     print ("DNA sequence is not valid")
@@ -350,8 +350,8 @@ class MySeq:
 # Naive Algorithm for Fixed Pattern Finding
 """Both variants are implemented in the Python functions provided in the following code block.
 The search_first_occ function uses an outer while cycle that finishes when the pattern is
-found, or the last sub-sequence is tested. The function returns the position of the first occurrence of the pattern, or if the pattern does not occur returns −1.
-The search_all_occurrences function uses a for cycle that tests for all possible subsequences (note that there are N − k + 1 possible positions where the pattern may occur),
+found, or the last sub-sequence is tested. The function returns the position of the first occurrence of the pattern, or if the pattern does not occur returns -1.
+The search_all_occurrences function uses a for cycle that tests for all possible subsequences (note that there are N - k + 1 possible positions where the pattern may occur),
 and returns a list with all initial positions of the pattern’s occurrences (the list is empty if the
 pattern does not occur)."""
 
@@ -400,7 +400,7 @@ def test_pat_search():
 """
 In the case of the bad-character rule, we create a dictionary with all possible symbols in the
 alphabet as keys, and with values defining the rightmost position where the symbol occurs
-in the pattern (−1 if the symbol does not occur). This allows to rapidly calculate the number
+in the pattern (-1 if the symbol does not occur). This allows to rapidly calculate the number
 of positions to move forward according to this rule by calculating the offset: position of the
 mismatch in the pattern – value for the symbol in the dictionary. Notice that this value might
 be negative and, in this case, this means the rule does not help and it will be ignored in that
@@ -855,4 +855,89 @@ def test():
     mat2 = extended_dotplot(s1, s2, 5, 4)
     print_dotplot(mat2, s1, s2)
 #test()
+
+
+
+    """ The following code shows a function to create the substitution matrix 
+    based on the values of a match and a mismatch score, also receiving as input the
+desired alphabet.
+    """
+
+
+def create_submat (match, mismatch, alphabet):
+    sm = {}
+    for c1 in alphabet:
+        for c2 in alphabet:
+            if (c1 == c2):
+                sm[c1+c2] = match
+            else :
+                sm[c1+c2] = mismatch
+    return sm
+
+def test_DNA():
+    sm = create_submat(1,0,"ACGT")
+    print (sm)
+# test_DNA()
+
+    """The next code block shows a function to read a substitution matrix
+from file, where the scores are separated by tabs and the first row is used 
+to define the alphabet used.
+
+    """
+
+def read_submat_file (filename):
+    sm = {}
+    f = open(filename, "r")
+    line = f.readline()
+    tokens = line.split("\t")
+    ns = len (tokens)
+    alphabet = []
+    for i in range (0, ns):
+        alphabet.append(tokens[i][0])
+    for i in range (0,ns):
+        line = f.readline();
+        tokens = line.split("\t");
+        for j in range (0, len (tokens)):
+            k = alphabet[i]+alphabet[j]
+            sm[k] = int (tokens[j])
+    return sm
+
+def test_prot():
+    sm = read_submat_file("blosum62.mat")
+    print (sm)
+
+# test_prot()
+
+
+    """the following functions show how the score of an alignment, represented by a list with two
+sequences, possibly containing gaps, can be calculated. The first calculates the score of a column 
+of the alignment, while the latter sums these values to reach the final score
+    """
+
+def score_pos (c1, c2, sm, g):
+    if c1 == "-" or c2=="-":
+        return g
+    else :
+        return sm[c1+c2]
+def score_align (seq1, seq2, sm, g):
+    res = 0;
+    for i in range ( len (seq1)):
+        res += score_pos (seq1[i], seq2[i], sm, g)
+    return res
+
+def test_DNA():
+    sm = create_submat(2,-2,"ACGT")
+    seq1 = "-CAGTGCATG-ACATA"
+    seq2 = "TCAG-GC-TCTACAGA"
+    g = -3
+    print (score_align(seq1, seq2, sm, g))
+
+def test_prot():
+    sm = read_submat_file("blosum62.mat")
+    seq1 = "LGPSSGCASRIWTKSA"
+    seq2 = "TGPS-G--S-IWSKSG"
+    g = -8
+    print (score_align(seq1, seq2, sm, g))
+#test_DNA()
+#test_prot()
 
