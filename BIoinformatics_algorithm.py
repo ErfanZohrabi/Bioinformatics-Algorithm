@@ -758,3 +758,37 @@ def iub_to_RE (iub):
 def test():
     print (iub_to_RE("G^AMTV"))
 #test()
+
+    """Given this function, we can now proceed to write functions to detect where a given enzyme
+will cut a given DNA sequence, and also to calculate the resulting sub-sequences after the cut
+(restriction map). These tasks are achieved by the functions cut_positions and cut_subsestxquences,
+ respectively, provided in the code below.
+    """
+
+def cut_positions (enzyme, sequence):
+    from re import finditer
+    cutpos = enzyme.find("^")
+    regexp = iub_to_RE(enzyme)
+
+    matches = finditer(regexp, sequence)
+    locs = [ ]
+    for m in matches:
+        locs.append(m.start() + cutpos)
+    return locs
+
+def cut_subsequences (locs, sequence):
+    res = []
+    positions = locs
+    positions.insert(0,0)
+    positions.append( len (sequence))
+    for i in range( len (positions)-1):
+        res.append(sequence[positions[i]:positions[i+1]])
+    return res
+
+def test():
+    pos = cut_positions("G^ATTC", "GTAGAAGATTCTGAGATCGATTC")
+    print (pos)
+    print (cut_subsequences(pos, "GTAGAAGATTCTGAGATCGATTC"))
+# test()
+
+
