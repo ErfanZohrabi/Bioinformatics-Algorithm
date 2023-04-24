@@ -941,3 +941,48 @@ def test_prot():
 #test_DNA()
 #test_prot()
 
+
+"""A more complex scenario emerges when the affine gap penalty model is used, since in this
+case the value of each column can be dependent of previous columns, in the case of multiple 
+consecutive gaps. The following function handles this case, by using two flags which are
+set to True when inside gap sequences. The function is applied to the previous example of a
+protein sequence alignment.
+    """
+
+def score_affinegap (seq1, seq2, sm, g, r):
+    res = 0
+    ingap1 = False
+    ingap2 = False
+    for i in range( len (seq1)):
+        if seq1[i]=="-":
+            if ingap1: 
+                res += r
+            else :
+                ingap1 = True
+                res += g
+        elif seq2[i]=="-":
+            if ingap2: 
+                res += r
+            else :
+                ingap2 = True
+                res += g
+        else :
+            if ingap1: 
+                ingap1 = False
+            if ingap2: 
+                ingap2 = False
+            res += sm[seq1[i]+seq2[i]]
+    return res
+
+def test_prot():
+    import blosum as bl
+    sm = read_submat_file(matrix)
+    seq1 = "LGPSSGCASRIWTKSA"
+    seq2 = "TGPS-G--S-IWSKSG"
+    g = -8
+    r = -2
+    print (score_affinegap(seq1, seq2, sm, g, r))
+
+#test_prot()
+
+
