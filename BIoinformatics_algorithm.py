@@ -986,3 +986,252 @@ def test_prot():
 #test_prot()
 
 
+
+
+    """in this function, the matrices S and T are represented as lists of lists, and these lists
+are filled when the values are being calculated through the use of the append function. The
+function first initializes the gaps row and column, and then fills the remaining of the matrices
+applying the recurrence relation. The result of the function is a tuple, providing in the first
+position the matrix S and in the second the matrix T .
+
+    """
+
+
+def needleman_wunsch(seq1, seq2, sm, g):
+    # Initialize the first row and column of the score and traceback matrices
+    S = [[0] * (len(seq2) + 1)]
+    T = [[0] * (len(seq2) + 1)]
+    for j in range(1, len(seq2) + 1):
+        S[0][j] = g * j
+        T[0][j] = 3  # Gap in seq1
+    for i in range(1, len(seq1) + 1):
+        S.append([g * i])
+        T.append([2])  # Gap in seq2
+    # Fill in the remaining cells of the matrices using the recurrence relation
+    for i in range(len(seq1)):
+        for j in range(len(seq2)):
+            s1 = S[i][j] + score_pos(seq1[i], seq2[j], sm, g)
+            s2 = S[i][j+1] + g
+            s3 = S[i+1][j] + g
+            S[i+1].append(max(s1, s2, s3))
+            T[i+1].append(max3t(s1, s2, s3))
+    return (S, T)
+
+def max3t(v1, v2, v3):
+    if v1 >= v2 and v1 >= v3:
+        return 1  # Match or mismatch
+    elif v2 >= v3:
+        return 2  # Gap in seq1
+    else:
+        return 3  # Gap in seq2
+
+
+    """The next function takes the trace-back (T ) matrix built from the last function, together with
+the two sequences, and implements the process of recovering the optimal alignment. The algorithm starts
+ in the bottom right corner of the matrix and uses the information in T to update
+the position and gather the alignment. A vertical (horizontal) cell in T leads to moving to
+the previous row (column), and adds to the alignment a column with a symbol from the sequence A (B) 
+in the respective row (column) and a gap in the other. A diagonal cell in T leads
+to moving to the previous row and column, and adds to the alignment a column with a symbol from 
+sequence A and another from sequence B, in the respective row and column. The
+algorithm stops when the top left corner of the matrix is reached. Notice that the alignment
+is represented by two strings of the same size, and is built in this function from the end to the
+beginning, i.e. new columns are added always in the beginning.
+    """
+
+
+def recover_align(T, seq1, seq2):
+    res = ["", ""]
+    i = len(seq1)
+    j = len(seq2)
+    while i > 0 or j > 0:
+        if T[i][j] == 1:
+            res[0] = seq1[i-1] + res[0]
+            res[1] = seq2[j-1] + res[1]
+            i -= 1
+            j -= 1
+        elif T[i][j] == 3:
+            res[0] = "-" + res[0]
+            res[1] = seq2[j-1] + res[1]
+            j -= 1
+        else:
+            res[0] = seq1[i-1] + res[0]
+            res[1] = "-" + res[1]
+            i -= 1
+    return res
+ 
+
+
+    """The following code block defines a testing function for the previous code, using the example
+of a protein sequence alignment from the previous section, aligning sequences “PHSWG” and
+“HGWAG”, using the BLOSUM62 substitution matrix and g = -8
+    """
+
+
+def print_mat(mat):
+    for i in range(0, len(mat)):
+        print(mat[i])
+
+def test_global_alig():
+    sm = read_submat_file("blosum62.mat")
+    seq1 = "PHSWG"
+    seq2 = "HGWAG"
+    res = needleman_wunsch(seq1, seq2, sm, -8)
+    S = res[0]
+    T = res[1]
+    print("Score of optimal alignment:", S[len(seq1)][len(seq2)])
+    print_mat(S)
+    print_mat(T)
+    alig = recover_align(T, seq1, seq2)
+    print(alig[0])
+    print(alig[1])
+
+#test_global_alig()
+
+
+    """The Smith-Waterman algorithm was implemented using Python functions as before. The first
+code block shows the core function that builds the S and T matrices, also returning the maximum score.
+ The implementation is similar to the one of global alignments, with the changes
+explained above. In this case, a tuple with the S and T matrices is also returned, but an extra
+element is added to the tuple with the score of the optimal alignment
+    """
+
+
+def smith_Waterman(seq1, seq2, sm, g):
+    S = [[0] * (len(seq2) + 1)]
+    T = [[0] * (len(seq2) + 1)]
+    maxscore = 0
+    for j in range(1, len(seq2) + 1):
+        S[0][j] = 0
+        T[0][j] = 0
+    for i in range(1, len(seq1) + 1):
+        s1_prev = S[i-1][0]
+        S.append([0] * (len(seq2) + 1))
+        T.append([0] * (len(seq2) + 1))
+        for j, char2 in enumerate(seq2):
+            s1 = s1_prev + score_pos(seq1[i-1], char2, sm, g)
+            s2 = S[i-1][j+1] - g
+            s3 = S[i][j] - g
+            b = max(s1, 0, s2, s3)
+            S[i][j+1] = b
+            T[i][j+1] = max3t(s1, s2, s3) if b > 0 else 0
+            if b > maxscore:
+                maxscore = b
+            s1_prev = S[i-1][j+1]
+    return (S, T, maxscore)
+
+
+
+    """Notice that this function only handles one optimal alignment, and therefore when multiple
+alignments exist with the same score (as it is the case in the example from the previous section) only one is returned.
+
+    """
+
+
+def recover_align_local(S, T, seq1, seq2):
+    res = ["", ""]
+    i, j = max_mat(S)
+    while T[i][j] > 0:
+        if T[i][j] == 1:
+            res[0] = seq1[i-1] + res[0]
+            res[1] = seq2[j-1] + res[1]
+            i -= 1
+            j -= 1
+        elif T[i][j] == 3:
+            res[0] = "-" + res[0]
+            res[1] = seq2[j-1] + res[1]
+            j -= 1
+        elif T[i][j] == 2:
+            res[0] = seq1[i-1] + res[0]
+            res[1] = "-" + res[1]
+            i -= 1
+    return res
+
+def max_mat(mat):
+    maxval = mat[0][0]
+    maxrow = 0
+    maxcol = 0
+    for i in range (0, len(mat)):
+        for j in range (0, len(mat[i])):
+            if mat[i][j] > maxval:
+                maxval = mat[i][j]
+                maxrow = i
+                maxcol = j
+    return (maxrow, maxcol)
+
+
+    """An example of the use of these functions to reach the alignment of the protein sequences
+given in the example is provided next
+    """
+
+
+def test_local_alig():
+    sm = read_submat_file("blosum62.mat")
+    seq1 = "HGWAG"
+    seq2 = "PHSWG"
+    res = smith_Waterman(seq1, seq2, sm, -8)
+    S = res[0]
+    T = res[1]
+    print("Score of optimal alignment:", res[2])
+    print_mat(S)
+    print_mat(T)
+    alinL = recover_align_local(S, T, seq1, seq2)
+    print(alinL[0])
+    print(alinL[1])
+    
+#test_local_alig()
+
+
+    """The following function implements this process, receiving as input the two sequences and
+the set of allowed characters (the alphabet parameter, set by default to consider DNA sequences).
+    """
+
+
+def identity(seq1, seq2, alphabet = "ACGT"):
+    sm = create_submat(1,0,alphabet)
+    S,_ = needleman_Wunsch(seq1, seq2, sm, 0)
+    equal = S[ len (seq1)][ len (seq2)]
+    return equal / max( len (seq1), len (seq2))
+
+def edit_distance(seq1, seq2, alphabet = "ACTG"):
+    sm = create_submat(0, -1, alphabet)
+    S = needleman_Wunsch(seq1, seq2,sm,-1)[0]
+    res = -1*S[ len (seq1)][ len (seq2)]
+    return res
+
+    """Another special case of alignment is the determination of the longest common sub-sequence
+to two sequences. Note that, in this case, the sub-sequences are not required to be of consecu
+tive positions within the original sequences. The following function provides a solution to the
+problem, using global alignments provided by the NW algorithm.
+    """
+
+def longest_common_subseq (seq1, seq2, alphabet = "ACGT"):
+    sm = create_submat(1, 0, alphabet)
+    _,T = needleman_wunsch(seq1, seq2, sm, 0)
+    alin = recover_align(T, seq1, seq2)
+    sizeal = len (alin[0])
+    lcs = ""
+    for i in range(sizeal):
+        if alin[0][i] == alin[1][i]:
+            lcs += alin[0][i]
+    return lcs
+
+    """Although the problem definition seems quite similar, the approach for this case will be differ
+    ent. Indeed, in this case, we can use the SW algorithm for local alignments, but need to make
+sure we do not have mismatches or gaps within the optimal alignment. One way to assure this
+condition is to impose a heavy penalty to both, that will make all solutions containing any of
+those cases score less than solutions containing only matches. This can be done by setting the
+gap and mismatch penalties to a negative value larger than the size of the sequences, in absolute terms.
+
+    """
+
+
+def longest_common_string (seq1, seq2, alphabet = "ACGT"):
+    m = max( len (seq1), len (seq2))
+    pen = -1 * (m+1)
+    sm = create_submat(1, pen, alphabet)
+    S,T,_ = smith_Waterman(seq1, seq2, sm, pen)
+    alinL= recover_align_local(S, T, seq1, seq2)
+    return alinL[0]
+
+
