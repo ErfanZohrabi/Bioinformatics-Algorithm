@@ -757,4 +757,4 @@ def iub_to_RE (iub):
 
 def test():
     print (iub_to_RE("G^AMTV"))
-test()
+#test()
