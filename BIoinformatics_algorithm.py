@@ -711,7 +711,7 @@ def find_zync_finger(seq):
     else :
         return -1
 """
-de""f test():
+def test():
     seq = "HKMMLASCKHLLCLKCIVKLG"
     print (find_zync_finger(seq))
 
