@@ -1235,3 +1235,20 @@ def longest_common_string (seq1, seq2, alphabet = "ACGT"):
     return alinL[0]
 
 
+    """The next example shows how to align two protein sequences, using the BLOSUM62 substitution matrix,
+      an opening gap penalty of −4 and an extension penalty of −1
+    """
+
+from Bio import pairwise2
+from Bio.pairwise2 import format_alignment
+
+# Call the pairwise2.align.globalxx() function and store the result in a variable
+alignments = pairwise2.align.globalxx("ATAGAGAATAG", "ATGGCAGATAGA")
+
+# Print the number of alignments returned by the pairwise2.align.globalxx() function
+print(len(alignments))
+
+# Use a for loop to iterate over each alignment and print it
+for a in alignments:
+    print(format_alignment(*a))
+
