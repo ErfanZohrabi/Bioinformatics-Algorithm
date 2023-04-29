@@ -1291,3 +1291,28 @@ def test_pairwise2_align_localm():
     for a in local_prot:
         print(format_alignment(*a))
 
+
+
+# Searching Similar Sequences in Databases
+    """This function takes as input a query sequence, a list
+of sequences (e.g. those in our database), the substitution matrix and the gap penalty 
+(assumed to be fixed), and returns the best local alignment of the query with a sequence in the
+database (ls).
+    """
+    
+def align_query(query, ls, sm, g):
+    bestScore = -1
+    bestSeq = None
+    bestAl = None
+    
+    for seq in ls:
+        al = smith_waterman(query, seq, sm, g)
+        if al[2] > bestScore:
+            bestScore = al[2]
+            bestSeq = seq
+            bestAl = al
+    
+    bestAlin = recover_align_local(bestAl[0], bestAl[1], query, bestSeq)
+    return bestAlin, bestScore
+
+
