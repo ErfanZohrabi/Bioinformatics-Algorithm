@@ -1316,3 +1316,119 @@ def align_query(query, ls, sm, g):
     return bestAlin, bestScore
 
 
+    """the next function creates a dictionary (map) from the query sequence following this
+idea. The dictionary returned has the words in the query as keys, and lists of positions where
+these occur as values.
+    """
+    """This function can be useful for tasks such as finding repeated motifs
+      in a DNA sequence or for identifying common patterns in a set of strings.
+    """
+
+
+def build_map(query, w):
+    res = {}
+    for i in range(len(query) - w + 1):
+        subseq = query[i:i+w]
+        if subseq in res:
+            res[subseq].append(i)
+        else:
+            res[subseq] = [i]
+    return res
+
+"""The next code chunk shows a function that, given a sequence, finds all matches of words from
+this sequence with the query. The result will be a list of hits, where each hit is a tuple with:
+(index of the match in the query, index of the match in the sequence). Notice that we use the
+map created from the query using the previous function, instead of the query itself, increasing
+the efficiency of the search.
+"""
+
+def get_hits(seq, m, w):
+    res = [] # list of tuples
+    for i in range(len(seq) - w + 1):
+        subseq = seq[i:i+w]
+        if subseq in m:
+            l = m[subseq]
+            for ind in l:
+                res.append((ind, i))
+    return res
+
+
+    """The next step will be to extend the hits that were found by the previous function. Again, here,
+we will greatly simplify the process by considering that the hit will be extended, in both directions
+, while the contribution to the increase in the score is larger or equal to half of the
+positions in the extension. The result is provided as a tuple with the following 
+fields: starting index of the alignment on the query, the starting index of the alignment on the sequence,
+the size of the alignment, and the score (i.e. the number of matching characters)
+    """
+
+def extends_hit(seq, hit, query, w):
+    stq, sts = hit[0], hit[1]
+    ## move forward
+    matfw = 0
+    k=0
+    bestk = 0
+
+    while 2*matfw >= k and stq+w+k < len(query) and sts+w+k < len(seq):
+        if query[stq+w+k] == seq[sts+w+k]:
+            matfw+=1
+            bestk = k+1
+        k += 1
+    size = w + bestk
+    ## move backwards
+    k=0
+    matbw = 0
+    bestk = 0
+    while 2*matbw >= k and stq > k and sts > k:
+        if query[stq-k-1] == seq[sts-k-1]:
+            matbw+=1
+            bestk = k+1
+        k+=1
+    size += bestk
+    return (stq-bestk, sts-bestk, size, w+matfw+matbw)
+
+
+    """The next function will identify the best alignment between the query and a given sequence,
+using the previous ones. We will identify all hits of size w and extend all those hits. The one
+with the best overall score (highest number of matches) will be selected. The result is provided 
+as a tuple with the format returned by the last function.
+    """
+
+def hit_best_score(seq, query, m, w):
+    hits = get_hits(seq, m, w)
+    bestScore = -1.0
+    best = ()
+    for h in hits:
+        ext = extends_hit(seq, h, query, w)
+        score = ext[3]
+        if score > bestScore or (score == bestScore and ext[2] < best[2]):
+            bestScore = score
+            best = ext
+    return best
+
+
+    """The final step is to apply the previous functions to compare a query with all the sequences
+in the database. In this case, we will find the best alignment of the query with each sequence
+in the database, and find the best overall alignment of the query with a given sequence. The
+result will be a tuple similar to the ones described above, adding in the last position the index
+of the sequence with the best alignment
+    """
+
+def best_alignment(db, query, w):
+    m = build_map(query, w)
+    bestScore = -1.0
+    res = (0, 0, 0, 0, 0)
+    for k in range(0, len(db)):
+        bestSeq = hit_best_score(db[k], query, m, w)
+        if bestSeq != ():
+            score = bestSeq[3]
+            if score > bestScore or (score == bestScore and bestSeq[2] < res[2]):
+                bestScore = score
+                res = bestSeq[0], bestSeq[1], bestSeq[2], bestSeq[3], k
+    if bestScore < 0:
+        return ()
+    else:
+        return res
+
+
+
+
